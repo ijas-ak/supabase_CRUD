@@ -1,9 +1,14 @@
+// ignore_for_file: unnecessary_import
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_basics/controller/provider.dart';
+import 'package:supabase_basics/model/student_model.dart';
 import 'package:supabase_basics/pages/sign_in_page.dart';
 import 'package:supabase_basics/pages/user_details.dart';
-import 'package:supabase_basics/supabase/services/supabase_services.dart';
+import 'package:supabase_basics/pages/widgets/student_tile.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,17 +18,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final userController = TextEditingController();
-
-  final userList = Supabase.instance.client
-      .from("users")
-      .stream(primaryKey: ["id"]);
-
   @override
   Widget build(BuildContext context) {
+    Provider.of<StudentProvider>(context, listen: false).fetchStudentData();
     return Scaffold(
       appBar: AppBar(
-        title: Text("Users"),
+        title: Text("Students"),
         centerTitle: true,
         actions: [
           IconButton(
@@ -38,58 +38,15 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: StreamBuilder(
-        stream: userList,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text("Error in the data"));
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                final data = snapshot.data![index];
-
-                return ListTile(
-                  title: Text(data["body"]),
-                  trailing: IconButton(
-                    onPressed: () {
-                      SupabaseServices().deleteUser(data["id"]);
-                    },
-                    icon: Icon(Icons.delete),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            UserDetails(username: data["body"]),
-                      ),
-                    );
-                  },
-                );
-              },
-            );
-          }
-        },
-      ),
+      body: Column(children: [SizedBox(height: 40), StudentTile()]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              content: TextField(controller: userController),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    SupabaseServices().addDataToSupa(userController.text);
-                    Navigator.pop(context);
-                  },
-                  child: Text("save"),
-                ),
-              ],
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserDetails(
+                student: Student(name: '', age: '', address: ''),
+              ),
             ),
           );
         },
